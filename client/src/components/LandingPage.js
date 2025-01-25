@@ -24,12 +24,21 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 p-4">
-      <Tabs
-        defaultActiveKey="1"
-        items={items}
-        className="max-w-4xl mx-auto bg-white p-4 rounded-lg shadow"
-      />
+    <div className="min-h-screen bg-gray-100">
+      <div className="h-screen flex flex-col">
+        <header className="bg-white shadow p-6">
+          <h1 className="text-2xl text-center font-bold text-black">
+            Your vAIdeo Companion
+          </h1>
+        </header>
+        <main className="flex-1 p-2 overflow-auto">
+          <Tabs
+            defaultActiveKey="1"
+            items={items}
+            className="h-full text-center bg-white p-4 rounded-lg shadow custom-tabs"
+          />
+        </main>
+      </div>
     </div>
   );
 };
