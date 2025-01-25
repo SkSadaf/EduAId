@@ -1,1 +1,1 @@
-# EduAid
+# EduAId
