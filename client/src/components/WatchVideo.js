@@ -1,15 +1,15 @@
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Button } from "antd";
+import { Button, FloatButton } from "antd";
 import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
+  MessageOutlined,
   SendOutlined,
+  CloseOutlined,
 } from "@ant-design/icons";
 
 const WatchVideo = () => {
   const { videoId } = useParams();
-  const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isChatExpanded, setIsChatExpanded] = useState(true);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
 
@@ -18,12 +18,11 @@ const WatchVideo = () => {
     if (message.trim()) {
       setChatHistory([...chatHistory, { type: "user", content: message }]);
       setMessage("");
-      // Add API call here for chat response
     }
   };
 
   return (
-    <div className="h-[calc(100vh-200px)] flex">
+    <div className="h-[calc(100vh-200px)] flex relative">
       <div
         className={`flex-1 transition-all duration-300 ${
           isChatExpanded ? "w-2/3" : "w-full"
@@ -37,23 +36,35 @@ const WatchVideo = () => {
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
         />
+
+        {!isChatExpanded && (
+          <FloatButton
+            icon={<MessageOutlined />}
+            type="primary"
+            style={{ right: 24, top: 100 }}
+            tooltip="Open Chat"
+            onClick={() => setIsChatExpanded(true)}
+          />
+        )}
       </div>
 
       <div
         className={`bg-white border-l border-gray-200 transition-all duration-300 flex flex-col
         ${isChatExpanded ? "w-1/3" : "w-0"}`}
       >
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className={`font-semibold ${!isChatExpanded && "hidden"}`}>
-            Chat
+        <div className="flex justify-between items-center p-4 rounded bg-blue-600">
+          <h3
+            className={`font-semibold text-white ${
+              !isChatExpanded && "hidden"
+            }`}
+          >
+            AI Chat Companion
           </h3>
           <Button
             type="text"
-            icon={
-              isChatExpanded ? <MenuFoldOutlined /> : <MenuUnfoldOutlined />
-            }
-            onClick={() => setIsChatExpanded(!isChatExpanded)}
-            className="flex items-center"
+            icon={<CloseOutlined />}
+            onClick={() => setIsChatExpanded(false)}
+            className="rounded-full h-8 w-8 flex items-center justify-center"
           />
         </div>
 
@@ -81,7 +92,10 @@ const WatchVideo = () => {
               ))}
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-4 border-t">
+            <form
+              onSubmit={handleSendMessage}
+              className="p-4 border-t bg-gray-50"
+            >
               <div className="flex gap-2">
                 <input
                   type="text"
