@@ -5,6 +5,8 @@ from timestamp import gettimestampoutput
 from transcripttoquiz import generate_mcqs
 from texttosummary import savetofile
 from videototranscript import get_transcript_from_url
+from videototranscript import get_video_id
+import io
 
 app = Flask(__name__)
 CORS(
@@ -20,12 +22,13 @@ CORS(
     supports_credentials=True,
 )
 
-# Cache structure
 cache = {
-    "transcripts": {},  # url: transcript
-    "summaries": {},  # url: summary
-    "translations": {},  # url_lang: translation
-    "quizzes": {},  # url: quiz
+    "transcripts": {},
+    "summaries": {},
+    "translations": {},
+    "quizzes": {},
+    "timestamps": {},
+    "downloads": {},  # New cache for downloads
 }
 
 
@@ -40,6 +43,14 @@ def get_cached_summary(url):
         transcript = get_cached_transcript(url)
         cache["summaries"][url] = generate_summary(transcript)
     return cache["summaries"][url]
+
+
+def get_cached_download(url, summary):
+    cache_key = f"{url}_{hash(summary)}"
+    if cache_key not in cache["downloads"]:
+        file_buffer = savetofile(url, summary)
+        cache["downloads"][cache_key] = file_buffer
+    return cache["downloads"][cache_key]
 
 
 @app.route("/api/summarize", methods=["POST"])
@@ -64,9 +75,8 @@ def generate_mcqs_api():
     try:
         if url not in cache["quizzes"]:
             transcript = get_cached_transcript(url)
-            # Using the existing generate_mcqs function
             mcqs = generate_mcqs(transcript)
-            cache["quizzes"][url] = mcqs.get_json()  # Cache the JSON response
+            cache["quizzes"][url] = mcqs.get_json()
         return cache["quizzes"][url]
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -89,7 +99,7 @@ def generate_translation_api():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/download", methods=["POST", "OPTIONS"])
+@app.route("/api/download", methods=["POST", "OPTIONS"])
 def download_summary():
     if request.method == "OPTIONS":
         response = make_response()
@@ -102,42 +112,27 @@ def download_summary():
             }
         )
         return response
-    data = request.json
-    return (
-        savetofile(data.get("url"), data.get("summary"))
-        if data.get("url") and data.get("summary")
-        else jsonify({"error": "URL and summary are required"})
-    ), 400
 
-@app.route("/api/get_qa", methods=["POST"])
-def generate_qa_api():
     data = request.json
-    url = data.get("youtube_url")
-    input_question = data.get("question")
-    
-    if not url or not input_question:
-        return jsonify({
-            "status": "error",
-            "message": "YouTube URL and question are required."
-        }), 400
-    
+    if not data or "youtube_url" not in data or "summary" not in data:
+        return jsonify({"error": "URL and summary are required"}), 400
+
     try:
-        # Use existing caching mechanism
-        cache_key = f"{url}_qa_{input_question}"
-        if cache_key not in cache["translations"]:
-            # Get transcript from cache or generate
-            transcript = get_cached_transcript(url)
-            # Generate QA response
-            qa_response = generate_qa(transcript, input_question)
-            cache["translations"][cache_key] = qa_response
-        
-        return jsonify(cache["translations"][cache_key])
-    except Exception as e:
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        buffer = io.BytesIO()
+        video_id = get_video_id(data["youtube_url"])
+        summary_content = f"Summary for video {video_id}:\n\n{data['summary']}"
+        buffer.write(summary_content.encode("utf-8"))
+        buffer.seek(0)
 
+        return send_file(
+            buffer,
+            mimetype="text/plain",
+            as_attachment=True,
+            download_name=f"summary_{video_id}.txt",
+        )
+    except Exception as e:
+        print(f"Download error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/get_timestamps", methods=["POST"])
@@ -145,34 +140,26 @@ def get_timestamps_api():
     data = request.json
     youtube_url = data.get("youtube_url")
     topic = data.get("topic")
-    
+
     if not youtube_url or not topic:
-        return jsonify({
-            "status": "error",
-            "message": "YouTube URL and topic are required."
-        }), 400
-    
+        return (
+            jsonify(
+                {"status": "error", "message": "YouTube URL and topic are required."}
+            ),
+            400,
+        )
+
     try:
-        # Create a cache key for timestamps
         cache_key = f"{youtube_url}_{topic}_timestamps"
-        
-        # Check if timestamps are already cached
         if cache_key not in cache["timestamps"]:
-            # If not in cache, generate timestamps
             timestamps = gettimestampoutput(youtube_url, topic)
             cache["timestamps"][cache_key] = timestamps
-        
-        return jsonify({
-            "status": "success",
-            "timestamps": cache["timestamps"][cache_key]
-        })
-    
+        return jsonify(
+            {"status": "success", "timestamps": cache["timestamps"][cache_key]}
+        )
     except Exception as e:
-        print(e)
-        return jsonify({
-            "status": "error",
-            "message": str(e)
-        }), 500
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 
 if __name__ == "__main__":
     app.run(debug=True)

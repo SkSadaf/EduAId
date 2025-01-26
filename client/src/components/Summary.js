@@ -11,15 +11,13 @@ const api = axios.create({
 const Summary = () => {
   const { videoId } = useParams();
   const location = useLocation();
-
   const searchParams = new URLSearchParams(location.search);
-  console.log(searchParams, "String");
   const youtubeUrl = searchParams.get("url");
-  console.log(youtubeUrl, "youtubeUrl");
 
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   const fetchSummary = async () => {
     if (!youtubeUrl) return;
@@ -32,7 +30,6 @@ const Summary = () => {
       });
       setSummary(data.summary);
     } catch (err) {
-      console.error("Error details:", err);
       setError(err.response?.data?.error || err.message);
     } finally {
       setIsLoading(false);
@@ -44,26 +41,35 @@ const Summary = () => {
   }, [youtubeUrl]);
 
   const handleDownload = async () => {
+    setDownloadLoading(true);
     try {
       const response = await api.post(
-        "/download",
+        "/api/download",
         {
-          url: decodeURIComponent(youtubeUrl),
-          summary,
+          youtube_url: decodeURIComponent(youtubeUrl),
+          summary: summary,
         },
-        { responseType: "blob" }
+        {
+          responseType: "blob",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `summary_${videoId}.txt`;
-      document.body.appendChild(a);
-      a.click();
+      const blob = new Blob([response.data], { type: "text/plain" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `summary_${videoId}.txt`;
+      document.body.appendChild(link);
+      link.click();
       window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      document.body.removeChild(link);
     } catch (err) {
-      setError(err.response?.data?.error || err.message);
+      setError("Failed to download summary. Please try again.");
+    } finally {
+      setDownloadLoading(false);
     }
   };
 
@@ -73,7 +79,11 @@ const Summary = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Video Summary</h2>
           {summary && (
-            <Button type="primary" onClick={handleDownload}>
+            <Button
+              type="primary"
+              onClick={handleDownload}
+              loading={downloadLoading}
+            >
               Download Summary
             </Button>
           )}
