@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Button, Radio, Space, Progress, message } from "antd";
 import { useParams, useLocation } from "react-router-dom";
-
 import axios from "axios";
 
 const api = axios.create({
@@ -11,49 +10,51 @@ const api = axios.create({
 
 const Quiz = () => {
   const { videoId } = useParams();
+  const location = useLocation();
   const [questions, setQuestions] = useState([]);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState("");
   const [score, setScore] = useState(0);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [fetchedQuestions, setFetchedquestions] = useState([]);
-
-  //
-    const location = useLocation();
-  
-    const searchParams = new URLSearchParams(location.search);
-    console.log(searchParams, "String");
-    const youtubeUrl = searchParams.get("url");
-    console.log(youtubeUrl, "youtubeUrl");
-  //
 
   useEffect(() => {
-    fetchQuestions();
-  }, [youtubeUrl]);
+    const fetchQuestions = async () => {
+      try {
+        const searchParams = new URLSearchParams(location.search);
+        const youtubeUrl = searchParams.get("url");
+        if (!youtubeUrl) {
+          throw new Error("No URL provided");
+        }
 
-  const fetchQuestions = async () => {
-    try {
-      const { data } = await api.post("/api/generate_mcqs", {
-        youtube_url: decodeURIComponent(youtubeUrl),
-      });
-  
-      // Transform the fetched questions
-      const transformedQuestions = data.map((item) => ({
-        question: item.question,
-        options: Object.values(item.options), // Convert options object to array
-        correctAnswer: item.correct_answer,
-      }));
-  
-      setFetchedquestions(transformedQuestions);
-      setQuestions(transformedQuestions); // Update the questions state
-      setLoading(false);
-    } catch (error) {
-      message.error("Failed to load quiz questions");
-      setLoading(false);
-    }
-  };
-  
+        // Clean the URL by removing time parameter
+        const cleanUrl = youtubeUrl.split("&t=")[0];
+
+        const { data } = await api.post("/api/generate_mcqs", {
+          youtube_url: decodeURIComponent(cleanUrl),
+        });
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid response format");
+        }
+
+        const transformedQuestions = data.map((item) => ({
+          question: item.question,
+          options: Object.values(item.options),
+          correctAnswer: item.correct_answer,
+        }));
+
+        setQuestions(transformedQuestions);
+      } catch (error) {
+        console.error("Quiz error:", error);
+        message.error(error.message || "Failed to load quiz questions");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchQuestions();
+  }, [location.search]);
 
   const handleAnswerSelect = (e) => {
     setSelectedAnswer(e.target.value);
@@ -104,6 +105,13 @@ const Quiz = () => {
   }
 
   const currentQuestionData = questions[currentQuestion];
+  if (!currentQuestionData) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-lg">No questions available</div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -115,16 +123,16 @@ const Quiz = () => {
           Score: {score}/{currentQuestion}
         </div>
       </div>
-  
+
       <div className="bg-white rounded-lg p-6 shadow-md">
-        <h3 className="text-xl mb-4">{currentQuestionData?.question}</h3>
+        <h3 className="text-xl mb-4">{currentQuestionData.question}</h3>
         <Radio.Group
           onChange={handleAnswerSelect}
           value={selectedAnswer}
           className="w-full"
         >
           <Space direction="vertical" className="w-full">
-            {currentQuestionData?.options.map((option, index) => (
+            {currentQuestionData.options.map((option, index) => (
               <Radio
                 key={index}
                 value={option}
@@ -136,7 +144,7 @@ const Quiz = () => {
           </Space>
         </Radio.Group>
       </div>
-  
+
       <div className="mt-6 flex justify-end">
         <Button type="primary" onClick={handleNext} disabled={!selectedAnswer}>
           {currentQuestion + 1 === questions.length ? "Finish" : "Next"}
@@ -144,7 +152,6 @@ const Quiz = () => {
       </div>
     </div>
   );
-  
 };
 
 export default Quiz;
