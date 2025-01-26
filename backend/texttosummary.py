@@ -5,9 +5,10 @@ from videototranscript import get_transcript_from_url, get_video_id
 from flask import Flask, send_file
 from youtube_transcript_api import YouTubeTranscriptApi
 import google.generativeai as genai
+from config import token
 
 # Set your API key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"
+os.environ["GOOGLE_API_KEY"] = token
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel("models/gemini-1.5-pro")
 

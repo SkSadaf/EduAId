@@ -3,9 +3,10 @@ from youtube_transcript_api import YouTubeTranscriptApi
 import os
 import google.generativeai as genai
 from datetime import timedelta
+from config import token
 
 # Set your API key
-os.environ["[REDACTED]"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"
+os.environ["[REDACTED]"] = token
 genai.configure(api_key=os.environ["[REDACTED]"])
 model = genai.GenerativeModel("models/gemini-1.5-pro")
 

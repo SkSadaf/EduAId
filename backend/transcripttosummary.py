@@ -3,6 +3,7 @@ import torch
 
 import re
 from youtube_transcript_api import YouTubeTranscriptApi
+from config import token
 
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
@@ -17,7 +18,7 @@ import google.generativeai as genai
 from fpdf import FPDF  # pip install fpdf
 
 # Set your API key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"
+os.environ["GOOGLE_API_KEY"] = token
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel("models/gemini-1.5-pro")
 

@@ -2,9 +2,11 @@ import re
 from youtube_transcript_api import YouTubeTranscriptApi
 import os
 import google.generativeai as genai
+from config import token
+
 
 # Set your API key
-os.environ["[REDACTED]"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"  # Replace with your actual API key
+os.environ["[REDACTED]"] = token  # Replace with your actual API key
 genai.configure(api_key=os.environ["[REDACTED]"])
 model = genai.GenerativeModel("models/gemini-1.5-pro")
 
