@@ -9,3 +9,18 @@
 .ant-tabs-tabpane {
   height: 100%;
 }
+
+/* After your Tailwind imports */
+
+.ant-tabs-nav {
+  justify-content: center !important;
+}
+
+.ant-tabs-nav .ant-tabs-nav-wrap {
+  justify-content: center !important;
+}
+
+.ant-tabs-content-holder {
+  display: flex;
+  justify-content: center;
+}
