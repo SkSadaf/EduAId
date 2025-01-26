@@ -4,19 +4,21 @@ from transcripttoquiz import generatequiz
 from texttosummary import generatesummary, savetofile
 from flask import Flask, jsonify, request, send_file
 
+from flask import Flask, jsonify, request, send_file, make_response
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(
     app,
     resources={
-        r"/api/*": {
+        r"/*": {
             "origins": ["http://localhost:3000"],
             "methods": ["GET", "POST", "OPTIONS"],
             "allow_headers": ["Content-Type"],
             "supports_credentials": True,
         }
     },
+    supports_credentials=True,
 )
 
 
@@ -48,8 +50,16 @@ def get_summary():
 ############################################################
 
 
-@app.route("/download", methods=["POST"])
+@app.route("/download", methods=["POST", "OPTIONS"])
 def download_summary():
+    if request.method == "OPTIONS":
+        response = make_response()
+        response.headers.add("Access-Control-Allow-Origin", "http://localhost:3000")
+        response.headers.add("Access-Control-Allow-Headers", "Content-Type")
+        response.headers.add("Access-Control-Allow-Methods", "POST")
+        response.headers.add("Access-Control-Allow-Credentials", "true")
+        return response
+
     data = request.json
     url = data.get("url")
     summary = data.get("summary")
