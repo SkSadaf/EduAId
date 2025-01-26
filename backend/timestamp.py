@@ -70,13 +70,13 @@ def find_topic_timestamps(transcript, topic):
     except Exception as e:
         return f"Error generating response: {e}"
 
-if __name__ == "__main__":
-    youtube_url = input("Enter YouTube video URL: ")
+def gettimestampoutput(youtube_url, topic):
+
     transcript = get_transcript_with_timestamps(youtube_url)
     
     if transcript:
         while True:
-            topic = input("\nWhat topic would you like to find in the video? (or 'quit' to exit): ")
+            # topic = input("\nWhat topic would you like to find in the video? (or 'quit' to exit): ")
             if topic.lower() == 'quit':
                 break
                 
@@ -85,3 +85,4 @@ if __name__ == "__main__":
             print("\nResults:")
             print(result)
             print("\n" + "="*50)
+            return result

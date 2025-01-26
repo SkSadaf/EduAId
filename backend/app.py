@@ -1,3 +1,5 @@
+from summaryToMultipleLang import translateSummarytoLang
+from timestamp import gettimestampoutput
 from transcripttoquiz import generatequiz
 from texttosummary import generatesummary, savetofile
 from flask import Flask, jsonify, request, send_file
@@ -62,6 +64,47 @@ def generate_mcqs_api():
 
 
 ###########################################################
+
+@app.route('/api/get_timestamp_output', methods=['POST'])
+def generate_timestamp_output_api():
+    data = request.json
+    youtube_url = data.get("youtube_url")
+    topic = data.get("topic")
+
+    if not youtube_url:
+        return jsonify({"error": "YouTube URL is required."}), 400
+
+    try:
+        # Fetch transcript from the provided YouTube URL
+        result = gettimestampoutput(youtube_url, topic)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return result
+
+
+
+###########################################################
+
+@app.route('/api/get_translation', methods=['POST'])
+def generate_translation_api():
+    data = request.json
+    youtube_url = data.get("youtube_url")
+    targetlanguage = data.get("targetlanguage")
+
+    if not youtube_url:
+        return jsonify({"error": "YouTube URL is required."}), 400
+
+    try:
+        # Fetch transcript from the provided YouTube URL
+        result = translateSummarytoLang(targetlanguage, youtube_url)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return result
+
+###########################################################
+
 
 if __name__ == '__main__':
     app.run(debug=True)
