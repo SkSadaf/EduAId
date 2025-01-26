@@ -3,6 +3,7 @@ import { Tabs } from "antd";
 import WatchVideo from "./WatchVideo";
 import Summary from "./Summary";
 import Quiz from "./Quiz";
+import Translation from "./Translation";
 
 const LandingPage = () => {
   const items = [
@@ -20,6 +21,11 @@ const LandingPage = () => {
       key: "3",
       label: "Take Quiz",
       children: <Quiz />,
+    },
+    {
+      key: "4",
+      label: "Translation",
+      children: <Translation />,
     },
   ];
 
