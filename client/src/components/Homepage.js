@@ -7,10 +7,17 @@ const Homepage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Extract video ID from URL
-    const urlObj = new URL(url);
-    const videoId = urlObj.searchParams.get("v");
-    navigate(`/video/${videoId}`);
+    try {
+      console.log("Submitted URL:", url);
+      const urlObj = new URL(url);
+      const videoId = urlObj.searchParams.get("v");
+      console.log("Extracted videoId:", videoId);
+      const encodedUrl = encodeURIComponent(url);
+      console.log("Navigation path:", `/video/${videoId}?url=${encodedUrl}`);
+      navigate(`/video/${videoId}?url=${encodedUrl}`);
+    } catch (error) {
+      console.error("URL parsing error:", error);
+    }
   };
 
   return (
@@ -24,7 +31,7 @@ const Homepage = () => {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
-            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <button
             type="submit"
