@@ -1,32 +1,15 @@
 import re
-from youtube_transcript_api import YouTubeTranscriptApi
 import os
+import io
+from videototranscript import get_transcript_from_url, get_video_id
+from flask import Flask, send_file
+from youtube_transcript_api import YouTubeTranscriptApi
 import google.generativeai as genai
 
 # Set your API key
-os.environ["GOOGLE_API_KEY"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"  # Replace with your actual API key
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBNANqT9e22OrvRBLXBnKt6sqZARHCkCpQ"
 genai.configure(api_key=os.environ["GOOGLE_API_KEY"])
 model = genai.GenerativeModel("models/gemini-1.5-pro")
-
-def Question_mcqs_generator(input_text, num_questions):
-    prompt = f"""
-    You are an AI assistant helping the user generate multiple-choice questions (MCQs) based on the following text:
-    '{input_text}'
-    Please generate {num_questions} MCQs from the text. Each question should have:
-    - A clear question
-    - Four answer options (labeled A, B, C, D)
-    - The correct answer clearly indicated
-    Format:
-    ## MCQ
-    Question: [question]
-    A) [option A]
-    B) [option B]
-    C) [option C]
-    D) [option D]
-    Correct Answer: [correct option]
-    """
-    response = model.generate_content(prompt).text.strip()
-    return response
 
 def generate_summary(input_text):
     prompt = f"""
@@ -54,87 +37,31 @@ def process_transcript(transcript_text):
     print("-" * 50)
     print(summary)
     
-    # Generate MCQs
-    print("\n=== Generating MCQs ===")
-    mcqs = Question_mcqs_generator(transcript_text, 5)  # Generate 5 MCQs
-    print("\nMultiple Choice Questions:")
-    print("-" * 50)
-    print(mcqs)
-    
-    return summary, mcqs
+    return summary
 
-def get_video_id(url):
-    video_id_pattern = r"(?:https?://)?(?:www\.)?(?:youtube\.com/watch\?v=|youtu\.be/)([a-zA-Z0-9_-]+)"
-    match = re.search(video_id_pattern, url)
-    if match:
-        return match.group(1)
-    else:
-        raise ValueError("Invalid YouTube URL")
+def generatesummary(url):
+    transcript_text = get_transcript_from_url(url)
+    if transcript_text:
+        summary = process_transcript(transcript_text)
+    return summary
 
-def get_transcript_from_url(url):
-    transcript_text = []
-    try:
-        video_id = get_video_id(url)
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        
-        print("\nExtracting transcript...")
-        for entry in transcript:
-            transcript_text.append(entry['text'])
-        
-        full_transcript = ' '.join(transcript_text)
-        print("\nTranscript extracted successfully!")
-        return full_transcript
-    
-    except Exception as e:
-        print(f"Error: {e}")
-        return None
 
-def save_to_file(content, filename):
-    with open(filename, 'w', encoding='utf-8') as f:
-        f.write(content)
+####################################################
 
-def main():
-    while True:
-        print("\n=== YouTube Video Processor ===")
-        print("1. Process a YouTube video")
-        print("2. Exit")
-        
-        choice = input("\nEnter your choice (1-2): ")
-        
-        if choice == '1':
-            url = input("\nEnter YouTube video URL: ")
-            transcript_text = get_transcript_from_url(url)
+def save_to_file(content):
+    # Use a BytesIO buffer to save the content in memory
+    buffer = io.BytesIO()
+    buffer.write(content.encode('utf-8'))
+    buffer.seek(0)  # Move to the beginning of the buffer
+    return buffer
+
+def savefile(url, summary):
+    video_id = get_video_id(url)
+    summary_content = f"Summary for video {video_id}:\n{summary}"
+    return save_to_file(summary_content)
+
+def savetofile(url,summary):
+    file_buffer = savefile(url, summary)
+    return send_file(file_buffer, as_attachment=True, download_name=f"summary_{get_video_id(url)}.txt", mimetype='text/plain')
+
             
-            if transcript_text:
-                summary, mcqs = process_transcript(transcript_text)
-                
-                # Ask if user wants to save the results
-                save_choice = input("\nDo you want to save the results to files? (y/n): ")
-                if save_choice.lower() == 'y':
-                    video_id = get_video_id(url)
-                    
-                    # Save summary
-                    summary_filename = f"summary_{video_id}.txt"
-                    save_to_file(summary, summary_filename)
-                    print(f"Summary saved to: {summary_filename}")
-                    
-                    # Save MCQs
-                    mcqs_filename = f"mcqs_{video_id}.txt"
-                    save_to_file(mcqs, mcqs_filename)
-                    print(f"MCQs saved to: {mcqs_filename}")
-                    
-                    # Save combined results
-                    combined_filename = f"combined_results_{video_id}.txt"
-                    combined_content = f"SUMMARY:\n\n{summary}\n\nMCQs:\n\n{mcqs}"
-                    save_to_file(combined_content, combined_filename)
-                    print(f"Combined results saved to: {combined_filename}")
-        
-        elif choice == '2':
-            print("\nThank you for using YouTube Video Processor!")
-            break
-        
-        else:
-            print("\nInvalid choice. Please try again.")
-
-if __name__ == "__main__":
-    main()
