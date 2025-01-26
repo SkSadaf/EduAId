@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Alert, Button, Spin } from "antd";
-import { FileText, Download, BookOpen } from "lucide-react";
+import { FileText, Download } from "lucide-react";
 import axios from "axios";
 
 const api = axios.create({

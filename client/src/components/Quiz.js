@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Button, Radio, Space, Progress, message } from "antd";
-import { useParams, useLocation } from "react-router-dom";
-import { BrainCircuit, ArrowRight, CheckCircle2, Trophy } from "lucide-react";
+import { useLocation } from "react-router-dom";
+import { ArrowRight, CheckCircle2, Trophy } from "lucide-react";
 import axios from "axios";
 
 const api = axios.create({

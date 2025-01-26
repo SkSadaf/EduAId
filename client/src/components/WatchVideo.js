@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
-import { Button, FloatButton, message } from "antd";
+import { Button, FloatButton } from "antd";
 import axios from "axios";
 import {
   MessageOutlined,

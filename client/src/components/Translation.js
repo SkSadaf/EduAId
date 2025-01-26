@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { Select, Button, Alert, Spin } from "antd";
-import { Globe, FileText } from "lucide-react";
+import { FileText } from "lucide-react";
 import axios from "axios";
 
 const api = axios.create({
