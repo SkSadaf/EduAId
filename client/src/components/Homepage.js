@@ -75,9 +75,15 @@ const Homepage = () => {
 
         <div className="max-w-6xl mx-auto px-4 py-16 relative">
           <div className="text-center mb-12">
-            <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4">
-              Edu-AId
-            </h1>
+            <div className="flex items-center justify-center gap-4 mb-4">
+              <iframe
+                src="https://lottie.host/embed/19ec29fd-f22d-42b3-a088-279a2dde2a45/jtKKcZReyK.lottie"
+                className="w-16 h-16"
+              />
+              <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+                Edu-AId
+              </h1>
+            </div>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
               What do you wanna learn today ?
             </p>
