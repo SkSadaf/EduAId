@@ -1,23 +1,64 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
-import { Button, FloatButton } from "antd";
+import { useParams, useLocation } from "react-router-dom";
+import { Button, FloatButton, message } from "antd";
+import axios from "axios";
 import {
   MessageOutlined,
   SendOutlined,
   CloseOutlined,
+  LoadingOutlined,
 } from "@ant-design/icons";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5000/",
+  withCredentials: true,
+});
 
 const WatchVideo = () => {
   const { videoId } = useParams();
+  const location = useLocation();
   const [isChatExpanded, setIsChatExpanded] = useState(true);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (message.trim()) {
-      setChatHistory([...chatHistory, { type: "user", content: message }]);
-      setMessage("");
+    if (!message.trim()) return;
+
+    const userMessage = message.trim();
+    setChatHistory((prev) => [...prev, { type: "user", content: userMessage }]);
+    setMessage("");
+    setIsLoading(true);
+
+    try {
+      const searchParams = new URLSearchParams(location.search);
+      const youtubeUrl = searchParams.get("url");
+
+      const { data } = await api.post("/api/get_qa", {
+        youtube_url: decodeURIComponent(youtubeUrl),
+        question: userMessage,
+      });
+
+      if (data.status === "success") {
+        setChatHistory((prev) => [
+          ...prev,
+          { type: "bot", content: data.answer },
+        ]);
+      } else {
+        throw new Error(data.message || "Failed to get response");
+      }
+    } catch (error) {
+      message.error(error.message || "Failed to get response");
+      setChatHistory((prev) => [
+        ...prev,
+        {
+          type: "bot",
+          content: "Sorry, I encountered an error. Please try again.",
+        },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -64,7 +105,7 @@ const WatchVideo = () => {
             type="text"
             icon={<CloseOutlined />}
             onClick={() => setIsChatExpanded(false)}
-            className="rounded-full h-8 w-8 flex items-center justify-center"
+            className="text-white hover:text-gray-200"
           />
         </div>
 
@@ -90,6 +131,13 @@ const WatchVideo = () => {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-lg p-3">
+                    <LoadingOutlined /> Thinking...
+                  </div>
+                </div>
+              )}
             </div>
 
             <form
@@ -101,13 +149,15 @@ const WatchVideo = () => {
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Type your question..."
+                  placeholder="Ask me anything about the video..."
                   className="flex-1 px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  disabled={isLoading}
                 />
                 <Button
                   type="primary"
                   htmlType="submit"
                   icon={<SendOutlined />}
+                  disabled={isLoading}
                   className="flex items-center"
                 />
               </div>
