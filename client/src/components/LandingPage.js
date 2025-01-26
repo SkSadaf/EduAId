@@ -4,6 +4,7 @@ import WatchVideo from "./WatchVideo";
 import Summary from "./Summary";
 import Quiz from "./Quiz";
 import Translation from "./Translation";
+import Timestamp from "./Timestamp";
 
 const LandingPage = () => {
   const items = [
@@ -26,6 +27,11 @@ const LandingPage = () => {
       key: "4",
       label: "Translation",
       children: <Translation />,
+    },
+    {
+      key: "5",
+      label: "Timestamp",
+      children: <Timestamp />,
     },
   ];
 
