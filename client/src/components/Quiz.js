@@ -27,9 +27,7 @@ const Quiz = () => {
           throw new Error("No URL provided");
         }
 
-        // Clean the URL by removing time parameter
         const cleanUrl = youtubeUrl.split("&t=")[0];
-
         const { data } = await api.post("/api/generate_mcqs", {
           youtube_url: decodeURIComponent(cleanUrl),
         });
@@ -46,7 +44,6 @@ const Quiz = () => {
 
         setQuestions(transformedQuestions);
       } catch (error) {
-        console.error("Quiz error:", error);
         message.error(error.message || "Failed to load quiz questions");
       } finally {
         setLoading(false);
@@ -61,8 +58,13 @@ const Quiz = () => {
   };
 
   const handleNext = () => {
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore(score + 1);
+    const correctAnswerIndex =
+      questions[currentQuestion].correctAnswer.charCodeAt(0) - 65;
+    const isCorrect =
+      selectedAnswer === questions[currentQuestion].options[correctAnswerIndex];
+
+    if (isCorrect) {
+      setScore((prevScore) => prevScore + 1);
     }
 
     if (currentQuestion + 1 < questions.length) {
@@ -120,7 +122,7 @@ const Quiz = () => {
           Question {currentQuestion + 1} of {questions.length}
         </div>
         <div className="text-lg">
-          Score: {score}/{currentQuestion}
+          Score: {score}/{questions.length}
         </div>
       </div>
 
