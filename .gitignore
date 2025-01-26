@@ -3,3 +3,4 @@ backend/__pycache__/texttosummary.cpython-312.pyc
 backend/__pycache__/timestamp.cpython-312.pyc
 backend/__pycache__/transcripttoquiz.cpython-312.pyc
 backend/__pycache__/videototranscript.cpython-312.pyc
+backend/.env
