@@ -1,3 +1,4 @@
+from chatbot import generate_qa
 from flask import Flask, jsonify, request, send_file, make_response
 from flask_cors import CORS
 from summaryToMultipleLang import translate_text, generate_summary
@@ -160,6 +161,35 @@ def get_timestamps_api():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+
+@app.route("/api/get_qa", methods=["POST"])
+def generate_qa_api():
+    data = request.json
+    url = data.get("youtube_url")
+    input_question = data.get("question")
+    
+    if not url or not input_question:
+        return jsonify({
+            "status": "error",
+            "message": "YouTube URL and question are required."
+        }), 400
+    
+    try:
+        # Use existing caching mechanism
+        cache_key = f"{url}_qa_{input_question}"
+        if cache_key not in cache["translations"]:
+            # Get transcript from cache or generate
+            transcript = get_cached_transcript(url)
+            # Generate QA response
+            qa_response = generate_qa(transcript, input_question)
+            cache["translations"][cache_key] = qa_response
+        
+        return jsonify(cache["translations"][cache_key])
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
