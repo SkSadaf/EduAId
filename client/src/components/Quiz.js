@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Button, Radio, Space, Progress, message } from "antd";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
+
+import axios from "axios";
+
+const api = axios.create({
+  baseURL: "http://127.0.0.1:5000/",
+  withCredentials: true,
+});
 
 const Quiz = () => {
   const { videoId } = useParams();
@@ -10,22 +17,43 @@ const Quiz = () => {
   const [score, setScore] = useState(0);
   const [isQuizComplete, setIsQuizComplete] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [fetchedQuestions, setFetchedquestions] = useState([]);
+
+  //
+    const location = useLocation();
+  
+    const searchParams = new URLSearchParams(location.search);
+    console.log(searchParams, "String");
+    const youtubeUrl = searchParams.get("url");
+    console.log(youtubeUrl, "youtubeUrl");
+  //
 
   useEffect(() => {
     fetchQuestions();
-  }, [videoId]);
+  }, [youtubeUrl]);
 
   const fetchQuestions = async () => {
     try {
-      const response = await fetch(`/api/quiz/${videoId}`);
-      const data = await response.json();
-      setQuestions(data.questions);
+      const { data } = await api.post("/api/generate_mcqs", {
+        youtube_url: decodeURIComponent(youtubeUrl),
+      });
+  
+      // Transform the fetched questions
+      const transformedQuestions = data.map((item) => ({
+        question: item.question,
+        options: Object.values(item.options), // Convert options object to array
+        correctAnswer: item.correct_answer,
+      }));
+  
+      setFetchedquestions(transformedQuestions);
+      setQuestions(transformedQuestions); // Update the questions state
       setLoading(false);
     } catch (error) {
       message.error("Failed to load quiz questions");
       setLoading(false);
     }
   };
+  
 
   const handleAnswerSelect = (e) => {
     setSelectedAnswer(e.target.value);
@@ -87,7 +115,7 @@ const Quiz = () => {
           Score: {score}/{currentQuestion}
         </div>
       </div>
-
+  
       <div className="bg-white rounded-lg p-6 shadow-md">
         <h3 className="text-xl mb-4">{currentQuestionData?.question}</h3>
         <Radio.Group
@@ -108,7 +136,7 @@ const Quiz = () => {
           </Space>
         </Radio.Group>
       </div>
-
+  
       <div className="mt-6 flex justify-end">
         <Button type="primary" onClick={handleNext} disabled={!selectedAnswer}>
           {currentQuestion + 1 === questions.length ? "Finish" : "Next"}
@@ -116,6 +144,7 @@ const Quiz = () => {
       </div>
     </div>
   );
+  
 };
 
 export default Quiz;

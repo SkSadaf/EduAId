@@ -11,8 +11,11 @@ const api = axios.create({
 const Summary = () => {
   const { videoId } = useParams();
   const location = useLocation();
+
   const searchParams = new URLSearchParams(location.search);
+  console.log(searchParams, "String");
   const youtubeUrl = searchParams.get("url");
+  console.log(youtubeUrl, "youtubeUrl");
 
   const [summary, setSummary] = useState("");
   const [isLoading, setIsLoading] = useState(false);
