@@ -1,4 +1,6 @@
-from flask import Flask, jsonify
+from transcripttoquiz import generatequiz
+from texttosummary import generatesummary, savetofile
+from flask import Flask, jsonify, request, send_file
 
 app = Flask(__name__)
 
@@ -10,15 +12,56 @@ def get_text():
 #########################################################
 
 
-@app.route('/api/summarize', methods=['GET'])
+@app.route('/api/summarize', methods=['POST'])
 def get_summary():
-    # youtube_url = input("Enter YouTube video URL: ")
-    transcript_text = get_transcript_from_url("https://www.youtube.com/watch?v=gxCP68xIR5Y")
-    summary = get_summary_from_transcript(transcript_text)
+    data = request.json
+    youtube_url = data.get("youtube_url")
 
-    return jsonify({"message": "Done with summary!"})
+    if not youtube_url:
+        return jsonify({"error": "YouTube URL is required."}), 400
+
+    try:
+        # Fetch transcript from the provided YouTube URL
+        summary = generatesummary(youtube_url)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"summary": summary})
+############################################################
 
 
+@app.route('/download', methods=['POST'])
+def download_summary():
+    data = request.json
+    url = data.get('url')
+    summary = data.get('summary')
+
+    if not url or not summary:
+        return jsonify({'error': 'URL and summary are required'}), 400
+
+    return savetofile(url, summary)
+
+#############################################################
+
+@app.route('/api/generate_mcqs', methods=['POST'])
+def generate_mcqs_api():
+    data = request.json
+    youtube_url = data.get("youtube_url")
+
+    if not youtube_url:
+        return jsonify({"error": "YouTube URL is required."}), 400
+
+    try:
+        # Fetch transcript from the provided YouTube URL
+        mcqs = generatequiz(youtube_url)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return mcqs
+
+
+
+###########################################################
 
 if __name__ == '__main__':
     app.run(debug=True)
