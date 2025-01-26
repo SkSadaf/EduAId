@@ -4,9 +4,23 @@ from transcripttoquiz import generatequiz
 from texttosummary import generatesummary, savetofile
 from flask import Flask, jsonify, request, send_file
 
-app = Flask(__name__)
+from flask_cors import CORS
 
-@app.route('/api/text', methods=['GET'])
+app = Flask(__name__)
+CORS(
+    app,
+    resources={
+        r"/api/*": {
+            "origins": ["http://localhost:3000"],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type"],
+            "supports_credentials": True,
+        }
+    },
+)
+
+
+@app.route("/api/text", methods=["GET"])
 def get_text():
     return jsonify({"message": "Hello from Flask!"})
 
@@ -14,7 +28,7 @@ def get_text():
 #########################################################
 
 
-@app.route('/api/summarize', methods=['POST'])
+@app.route("/api/summarize", methods=["POST"])
 def get_summary():
     data = request.json
     youtube_url = data.get("youtube_url")
@@ -29,23 +43,27 @@ def get_summary():
         return jsonify({"error": str(e)}), 500
 
     return jsonify({"summary": summary})
+
+
 ############################################################
 
 
-@app.route('/download', methods=['POST'])
+@app.route("/download", methods=["POST"])
 def download_summary():
     data = request.json
-    url = data.get('url')
-    summary = data.get('summary')
+    url = data.get("url")
+    summary = data.get("summary")
 
     if not url or not summary:
-        return jsonify({'error': 'URL and summary are required'}), 400
+        return jsonify({"error": "URL and summary are required"}), 400
 
     return savetofile(url, summary)
 
+
 #############################################################
 
-@app.route('/api/generate_mcqs', methods=['POST'])
+
+@app.route("/api/generate_mcqs", methods=["POST"])
 def generate_mcqs_api():
     data = request.json
     youtube_url = data.get("youtube_url")
@@ -62,10 +80,10 @@ def generate_mcqs_api():
     return mcqs
 
 
-
 ###########################################################
 
-@app.route('/api/get_timestamp_output', methods=['POST'])
+
+@app.route("/api/get_timestamp_output", methods=["POST"])
 def generate_timestamp_output_api():
     data = request.json
     youtube_url = data.get("youtube_url")
@@ -83,10 +101,10 @@ def generate_timestamp_output_api():
     return result
 
 
-
 ###########################################################
 
-@app.route('/api/get_translation', methods=['POST'])
+
+@app.route("/api/get_translation", methods=["POST"])
 def generate_translation_api():
     data = request.json
     youtube_url = data.get("youtube_url")
@@ -103,8 +121,9 @@ def generate_translation_api():
 
     return result
 
+
 ###########################################################
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
